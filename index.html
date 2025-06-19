@@ -1118,9 +1118,10 @@
                     localStorage.setItem('reservationConfigsList', JSON.stringify(currentList));
                     savedConfigs = currentList;
                 }
-                if (showAlert) alert(`설정이 "${currentConfigName}"으로 저장되었습니다.`);
+                // default면 무조건 알림창 X
+                if (showAlert && currentConfigName !== 'default') alert(`설정이 "${currentConfigName}"으로 저장되었습니다.`);
             } else {
-                if (showAlert) alert(`설정이 "${currentConfigName}"으로 저장되었습니다.\n(브라우저가 localStorage를 지원하지 않아 임시 저장됩니다)`);
+                if (showAlert && currentConfigName !== 'default') alert(`설정이 "${currentConfigName}"으로 저장되었습니다.\n(브라우저가 localStorage를 지원하지 않아 임시 저장됩니다)`);
             }
         }
 
@@ -1184,7 +1185,7 @@
             updateAllUI();
             
             // showAlert가 true일 때만 알림 표시
-            if (showAlert) {
+            if (showAlert && name !== 'default') {
                 alert(`설정 "${name}"을(를) 불러왔습니다.`);
             }
         }
