@@ -552,7 +552,7 @@
 
             <!-- 상품 관리 탭 -->
             <div id="productsTab" class="tab-content">
-                <div id="productGroupManager" style="margin-bottom: 16px; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; background: #f9fafb;">
+                <div style="margin-bottom: 16px; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; background: #f9fafb;">
                     <div style="display: flex; gap: 8px; align-items: end; margin-bottom: 8px;">
                         <div style="flex: 1;">
                             <label>그룹명</label>
@@ -562,31 +562,7 @@
                         <button class="btn btn-red" onclick="deleteProductGroup()">그룹 삭제</button>
                         <button class="btn btn-primary" onclick="renameProductGroup()">이름 변경</button>
                     </div>
-                    <div id="productGroupLists" style="display: flex; gap: 16px; flex-wrap: wrap;"></div>
-                </div>
-                <div class="form-row" style="margin-bottom: 16px; padding: 16px; border: 1px solid #d1d5db; border-radius: 8px;">
-                    <div>
-                        <label>상품명</label>
-                        <input type="text" id="newProductName" class="form-control">
-                    </div>
-                    <div>
-                        <label>가격</label>
-                        <input type="text" id="newProductPrice" class="form-control">
-                    </div>
-                    <button class="btn btn-primary" onclick="addProduct()">추가/수정</button>
-                </div>
-                <div class="table-container">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>상품명</th>
-                                <th>가격</th>
-                                <th>작업</th>
-                            </tr>
-                        </thead>
-                        <tbody id="productsTable">
-                        </tbody>
-                    </table>
+                    <div id="productGroupLists" class="group-list"></div>
                 </div>
             </div>
 
@@ -1531,34 +1507,43 @@
         function renderProductGroupLists() {
             const container = document.getElementById('productGroupLists');
             container.innerHTML = '';
-            const groups = currentSettings.productGroups;
-            for (const group in groups) {
+            const groups = Object.keys(currentSettings.productGroups);
+            groups.forEach((group, groupIdx) => {
                 const groupDiv = document.createElement('div');
-                groupDiv.style.minWidth = '200px';
-                groupDiv.style.background = '#fff';
-                groupDiv.style.border = '2px solid #3b82f6';
-                groupDiv.style.borderRadius = '8px';
-                groupDiv.style.padding = '12px';
-                groupDiv.style.marginBottom = '12px';
-                groupDiv.style.flex = '1 1 220px';
-                groupDiv.style.boxShadow = '0 2px 8px #e0e7ff44';
-                // 그룹명 + 버튼
+                groupDiv.className = 'group-card';
+                groupDiv.setAttribute('draggable', 'true');
+                groupDiv.ondragstart = e => { dragGroup = group; };
+                groupDiv.ondragend = e => { dragGroup = null; };
+                groupDiv.ondragover = e => { e.preventDefault(); groupDiv.classList.add('drag-over'); };
+                groupDiv.ondragleave = e => { groupDiv.classList.remove('drag-over'); };
+                groupDiv.ondrop = e => {
+                    groupDiv.classList.remove('drag-over');
+                    if (dragGroup && dragGroup !== group) {
+                        const arr = Object.entries(currentSettings.productGroups);
+                        const fromIdx = arr.findIndex(([g]) => g === dragGroup);
+                        const toIdx = arr.findIndex(([g]) => g === group);
+                        const moved = arr.splice(fromIdx, 1)[0];
+                        arr.splice(toIdx, 0, moved);
+                        const newGroups = {};
+                        arr.forEach(([g, v]) => newGroups[g] = v);
+                        currentSettings.productGroups = newGroups;
+                        renderProductGroupLists();
+                        updateProductSelect();
+                        saveCurrentConfig();
+                    }
+                };
+                // 그룹 헤더
                 const groupHeader = document.createElement('div');
-                groupHeader.style.display = 'flex';
-                groupHeader.style.justifyContent = 'space-between';
-                groupHeader.style.alignItems = 'center';
-                groupHeader.style.marginBottom = '8px';
+                groupHeader.className = 'group-header';
                 const groupNameSpan = document.createElement('span');
                 groupNameSpan.textContent = group;
-                groupNameSpan.style.fontWeight = 'bold';
-                groupNameSpan.style.fontSize = '16px';
                 groupHeader.appendChild(groupNameSpan);
                 const groupBtnBox = document.createElement('span');
+                groupBtnBox.className = 'group-btns';
                 // 이름변경
                 const renameBtn = document.createElement('button');
                 renameBtn.textContent = '✏️';
                 renameBtn.className = 'btn btn-settings';
-                renameBtn.style.padding = '2px 6px';
                 renameBtn.onclick = function() {
                     document.getElementById('newGroupName').value = group;
                     renameProductGroup();
@@ -1569,7 +1554,6 @@
                     const delBtn = document.createElement('button');
                     delBtn.textContent = '🗑️';
                     delBtn.className = 'btn btn-red';
-                    delBtn.style.padding = '2px 6px';
                     delBtn.onclick = function() {
                         document.getElementById('newGroupName').value = group;
                         deleteProductGroup();
@@ -1580,13 +1564,11 @@
                 groupDiv.appendChild(groupHeader);
                 // 상품 리스트
                 const ul = document.createElement('ul');
-                ul.style.listStyle = 'none';
-                ul.style.padding = '0';
-                ul.style.minHeight = '32px';
-                ul.ondragover = e => { e.preventDefault(); ul.style.background = '#e0e7ff'; };
-                ul.ondragleave = e => { ul.style.background = ''; };
+                ul.className = 'product-list';
+                ul.ondragover = e => { e.preventDefault(); ul.classList.add('drag-over'); };
+                ul.ondragleave = e => { ul.classList.remove('drag-over'); };
                 ul.ondrop = e => {
-                    ul.style.background = '';
+                    ul.classList.remove('drag-over');
                     if (dragProduct && dragFromGroup && dragFromGroup !== group) {
                         const idx = currentSettings.productGroups[dragFromGroup].indexOf(dragProduct);
                         if (idx > -1) currentSettings.productGroups[dragFromGroup].splice(idx, 1);
@@ -1597,15 +1579,9 @@
                         saveCurrentConfig();
                     }
                 };
-                groups[group].forEach(productName => {
+                currentSettings.productGroups[group].forEach(productName => {
                     const li = document.createElement('li');
-                    li.style.display = 'flex';
-                    li.style.alignItems = 'center';
-                    li.style.justifyContent = 'space-between';
-                    li.style.padding = '4px 8px';
-                    li.style.marginBottom = '2px';
-                    li.style.background = '#f1f5f9';
-                    li.style.borderRadius = '4px';
+                    li.className = 'product-item';
                     li.setAttribute('draggable', 'true');
                     li.ondragstart = e => { dragProduct = productName; dragFromGroup = group; };
                     li.ondragend = e => { dragProduct = null; dragFromGroup = null; };
@@ -1620,22 +1596,32 @@
                     const editBtn = document.createElement('button');
                     editBtn.textContent = '✏️';
                     editBtn.className = 'btn btn-settings';
-                    editBtn.style.padding = '2px 6px';
-                    // (실제 수정 함수는 후속 구현)
+                    editBtn.onclick = function() {
+                        document.getElementById('newProductName').value = productName;
+                        document.getElementById('newProductPrice').value = currentSettings.products[productName] || '';
+                    };
                     btnBox.appendChild(editBtn);
                     // 삭제
                     const delBtn = document.createElement('button');
                     delBtn.textContent = '🗑️';
                     delBtn.className = 'btn btn-red';
-                    delBtn.style.padding = '2px 6px';
-                    // (실제 삭제 함수는 후속 구현)
+                    delBtn.onclick = function() {
+                        if (confirm(`${productName}을(를) 삭제하시겠습니까?`)) {
+                            delete currentSettings.products[productName];
+                            const idx = currentSettings.productGroups[group].indexOf(productName);
+                            if (idx > -1) currentSettings.productGroups[group].splice(idx, 1);
+                            renderProductGroupLists();
+                            updateProductSelect();
+                            saveCurrentConfig();
+                        }
+                    };
                     btnBox.appendChild(delBtn);
                     li.appendChild(btnBox);
                     ul.appendChild(li);
                 });
                 groupDiv.appendChild(ul);
                 container.appendChild(groupDiv);
-            }
+            });
         }
 
         // productsTab 진입 시 renderProductGroupLists() 호출 필요
