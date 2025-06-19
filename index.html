@@ -171,15 +171,6 @@
             color: #64748b;
         }
 
-        .option-btn.dragging {
-            opacity: 0.5;
-            border: 2px dashed #3b82f6;
-        }
-        .option-btn.drag-over {
-            border: 2px solid #3b82f6;
-            background: #e0e7ff;
-        }
-
         .location-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -378,6 +369,36 @@
                 flex-direction: column;
             }
         }
+
+        @media (max-width: 700px) {
+            #productGroupSelects {
+                flex-wrap: wrap;
+            }
+            #productGroupSelects > div {
+                flex: 1 1 45%;
+                min-width: 140px;
+                max-width: 100%;
+            }
+        }
+
+        .group-card {
+            background: #e0e7ff;
+            border: 1.5px solid #a5b4fc;
+            border-radius: 10px;
+            padding: 12px 10px 16px 10px;
+            margin-bottom: 0;
+            min-width: 140px;
+            box-sizing: border-box;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+        }
+        .group-card label {
+            color: #3730a3;
+        }
+        /* 그룹별 색상 예시 (원하면 더 추가 가능) */
+        .group-mu { background: #dbeafe; border-color: #60a5fa; }
+        .group-chuka { background: #fef9c3; border-color: #fde047; }
+        .group-nogum { background: #dcfce7; border-color: #4ade80; }
+        .group-junmoon { background: #f3e8ff; border-color: #c084fc; }
     </style>
 </head>
 <body>
@@ -385,14 +406,9 @@
         <!-- 헤더 -->
         <div class="header">
             <h1 class="title">예약프로그램</h1>
-            <div style="display: flex; gap: 8px;">
-                <button class="btn btn-red" onclick="resetForm()">
-                    🔄 초기화
-                </button>
-                <button class="btn btn-settings" onclick="openSettings()">
-                    ⚙ 설정
-                </button>
-            </div>
+            <button class="btn btn-settings" onclick="openSettings()">
+                ⚙ 설정
+            </button>
         </div>
 
         <!-- 현재 설정 표시 -->
@@ -408,10 +424,8 @@
         <!-- 폼 -->
         <div class="form-group">
             <label>상품명:</label>
-            <div id="productGroupTabs" style="display: flex; gap: 4px; margin-bottom: 6px;"></div>
-            <select id="productType" class="form-control" onchange="updatePrice()">
-                <option value="">선택하세요</option>
-            </select>
+            <div id="productGroupButtons" style="display: flex; gap: 8px; margin-bottom: 8px;"></div>
+            <div id="productGroupSelects"></div>
         </div>
 
         <div class="form-group">
@@ -458,29 +472,23 @@
 
         <div class="form-group">
             <label>시작 시간:</label>
-            <select id="startTime" class="form-control" onchange="updateEndTime(); updatePrice();">
+            <select id="startTime" class="form-control" onchange="updateEndTime()">
             </select>
         </div>
 
         <div class="form-group">
             <label>종료 시간:</label>
-            <select id="endTime" class="form-control" onchange="updatePrice();">
+            <select id="endTime" class="form-control">
             </select>
         </div>
 
         <div class="form-group">
+            <label>할인:</label>
+            <input type="text" id="discountAmount" class="form-control" value="0" placeholder="할인 금액 입력">
+        </div>
+        <div class="form-group">
             <label>금액:</label>
             <input type="text" id="amount" class="form-control" value="0">
-        </div>
-
-        <div class="form-group">
-            <label>할인 금액:</label>
-            <input type="text" id="discount" class="form-control" value="0" onchange="updateTotalAmount()">
-        </div>
-
-        <div class="form-group">
-            <label>최종 금액:</label>
-            <input type="text" id="totalAmount" class="form-control" value="0" readonly>
         </div>
 
         <!-- 추가 옵션 -->
@@ -547,22 +555,35 @@
             <div class="tabs">
                 <button class="tab active" onclick="switchTab('products')">상품 관리</button>
                 <button class="tab" onclick="switchTab('buttons')">버튼 관리</button>
+                <button class="tab" onclick="switchTab('groups')">그룹 관리</button>
                 <button class="tab" onclick="switchTab('templates')">템플릿 관리</button>
             </div>
 
             <!-- 상품 관리 탭 -->
             <div id="productsTab" class="tab-content">
-                <div style="margin-bottom: 16px; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; background: #f9fafb;">
-                    <div style="display: flex; gap: 8px; align-items: end; margin-bottom: 8px;">
-                        <div style="flex: 1;">
-                            <label>그룹명</label>
-                            <input type="text" id="newGroupName" class="form-control" placeholder="새 그룹명 입력">
-                        </div>
-                        <button class="btn btn-green" onclick="addProductGroup()">그룹 추가</button>
-                        <button class="btn btn-red" onclick="deleteProductGroup()">그룹 삭제</button>
-                        <button class="btn btn-primary" onclick="renameProductGroup()">이름 변경</button>
+                <div class="form-row" style="margin-bottom: 16px; padding: 16px; border: 1px solid #d1d5db; border-radius: 8px;">
+                    <div>
+                        <label>상품명</label>
+                        <input type="text" id="newProductName" class="form-control">
                     </div>
-                    <div id="productGroupLists" class="group-list"></div>
+                    <div>
+                        <label>가격</label>
+                        <input type="text" id="newProductPrice" class="form-control">
+                    </div>
+                    <button class="btn btn-primary" onclick="addProduct()">추가/수정</button>
+                </div>
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>상품명</th>
+                                <th>가격</th>
+                                <th>작업</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsTable">
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -591,6 +612,23 @@
                         <tbody id="buttonsTable">
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            <!-- 그룹 관리 탭 -->
+            <div id="groupsTab" class="tab-content hidden">
+                <div style="margin-bottom: 16px; padding: 16px; border: 1px solid #d1d5db; border-radius: 8px;">
+                    <h3>그룹 관리</h3>
+                    <div style="display: flex; gap: 8px; align-items: end; margin-bottom: 8px;">
+                        <div style="flex: 1;">
+                            <label>그룹 선택</label>
+                            <select id="groupSelect" class="form-control" onchange="loadGroup()"></select>
+                        </div>
+                        <input type="text" id="newGroupName" class="form-control" placeholder="새 그룹명" style="width: 120px;">
+                        <button class="btn btn-green" onclick="addGroup()">그룹 추가</button>
+                        <button class="btn btn-red" onclick="deleteGroup()">그룹 삭제</button>
+                    </div>
+                    <div id="groupEditArea" style="margin-top: 12px;"></div>
                 </div>
             </div>
 
@@ -640,28 +678,21 @@
                 "스페셜": 295000,
                 "프리미엄": 390000
             },
-            productGroups: {
-                "뮤 패키지": ["뮤B하프패키지", "뮤B기본패키지", "뮤B프로패키지", "뮤A하프패키지", "뮤A기본패키지", "뮤A프로패키지"],
-                "축가 패키지": ["듀오", "스페셜", "프리미엄"],
-                "녹음": ["일반녹음"],
-                "전문녹음패키지": ["가이드보컬 패키지"],
-                "기타": []
-            },
-            buttons: {
-                "녹음 30분 연장": 22500,
-                "촬영 30분 연장": 60000,
-                "광속믹스": 30000,
-                "급제작": 50000,
-                "얼굴보정": 20000,
-                "축가 얼굴보정": 50000,
-                "유료썸네일": 5000,
-                "축가 인원추가": 30000,
-                "보컬 레슨": 50000,
-                "MR제작": 20000,
-                "리허설 가이드": 30000,
-                "쇼츠&릴스": 20000,
-                "인원추가": 20000
-            },
+            buttons: [
+                { name: "녹음 30분 연장", amount: 22500 },
+                { name: "촬영 30분 연장", amount: 60000 },
+                { name: "광속믹스", amount: 30000 },
+                { name: "급제작", amount: 50000 },
+                { name: "얼굴보정", amount: 20000 },
+                { name: "축가 얼굴보정", amount: 50000 },
+                { name: "유료썸네일", amount: 5000 },
+                { name: "축가 인원추가", amount: 30000 },
+                { name: "보컬 레슨", amount: 50000 },
+                { name: "MR제작", amount: 20000 },
+                { name: "리허설 가이드", amount: 30000 },
+                { name: "쇼츠&릴스", amount: 20000 },
+                { name: "인원추가", amount: 20000 }
+            ],
             templates: {
                 "사당점": "- 예약: {상품명}\n\n- 예약 정보 -\n예약자: {예약자}님\n인원: {인원}\n곡목: {곡목}\n촬영배경: {촬영배경}\n\n날짜: {날짜} ({요일})\n시간: {시작시간} - {종료시간}\n\n- 결제 정보 -\n금액: {금액} 원\n옵션: {옵션}\n입금 후 예약 확정\n우리은행 1005202578266 (우리스튜디오, 이승재)\n카드결제 및 계산서 발행 시 VAT10% 별도\n\n예약 시 24시간 내로 결제가 되지 않는 경우\n예약이 고지 없이 취소될 수 있습니다.\n(입금하신 분은 자동 확정)\n\n- 반주 및 음원 링크 -\n녹음 시 사용할 반주 또는 반주 음원 링크를 이메일\nseungjjj@naver.com로 예약일 하루 전까지 꼭 보내주세요.\n준비가 어려울 경우 스튜디오에서 유튜브 반주로 준비가 가능하나,\n예약 시간 내에 진행해 드리므로 이용 시간이 차감될 수 있습니다.\n\n﻿- 작업 기한 -\n스튜디오 작업량에 따라 평균 2~3일 소요됩니다. (주말 및 공휴일 제외) \n작업 완료 후 메일로 발송해 드리니 이메일을 꼭 확인해주세요.\n\n- 스튜디오 정보 -\n주소: 서울시 동작구 사당로30길 28, 지층 우리녹음실\n이수역 9번출구 도보 3분\n주차장 없음, 대중 교통 이용 권장\n\n- 유료 주차장 정보 -\n1. 복개도로제2지역공영주차장: 서울 서초구 방배동 493-5 / 10분당 500원, 일요일/공휴일 무료, 경차 50% 할인\n2. 이마트 지하주차장: 서울특별시 동작구 사당동 147-29 / 10분당 1,000원, 복개도로주차장보다 스튜디오와 가깝습니다.\n3. 상가 주차장: 서울특별시 동작구 사당동 1007-30\n\n- 스튜디오 연장 -\n30분 단위로 유료 연장 가능 (다음 예약이 없을 경우)\n\n﻿- 문자&전화 상담 시간 -\n평일 11:00~19:00 (주말 및 공휴일 휴무)\n네이버 톡톡을 이용하시면 연중 무휴로 예약 가능합니다.\n\n- 예약 변경 및 취소 환불 -\n예약일 5일 전까지: 70%\n예약일 4일 전까지: 60%\n예약일 3일 전까지: 50%\n예약일 2일 전까지: 40%\n예약일 1일 전까지: 30%\n예약일 당일 변경 및 취소: 0%\n(취소 및 변경 시 예약금 전액 환불 불가)\n\n공정거래위원회 지침 의거. \n\n- 문의 사항이 있거나 변경이 필요하면 언제든지 연락주세요-",
                 "인천점": "- 예약: {상품명}\n\n- 예약 정보 -\n예약자: {예약자}님\n인원: {인원}\n곡목: {곡목}\n촬영배경: {촬영배경}\n\n날짜: {날짜} ({요일})\n시간: {시작시간} - {종료시간}\n\n- 결제 정보 -\n금액: {금액} 원\n옵션: {옵션}\n입금 후 예약 확정\n우리은행 1005202578266 (우리스튜디오, 이승재)\n카드결제 및 계산서 발행 시 VAT10% 별도\n\n예약 시 24시간 내로 결제가 되지 않는 경우\n예약이 고지 없이 취소될 수 있습니다.\n(입금하신 분은 자동 확정)\n\n- 반주 및 음원 링크 -\n녹음 시 사용할 반주 또는 반주 음원 링크를 이메일\nseungjjj@naver.com로 예약일 하루 전까지 꼭 보내주세요.\n준비가 어려울 경우 스튜디오에서 유튜브 반주로 준비가 가능하나,\n예약 시간 내에 진행해 드리므로 이용 시간이 차감될 수 있습니다.\n\n﻿- 작업 기한 -\n스튜디오 작업량에 따라 평균 2~3일 소요됩니다. (주말 및 공휴일 제외) \n작업 완료 후 메일로 발송해 드리니 이메일을 꼭 확인해주세요.\n\n- 스튜디오 정보 -\n주소: 인천시 미추홀구 주안서로24 지층 우리녹음실\n주안역/인천2호선 시민공원역 도보 6분\n유료 주차장 또는 대중 교통 이용 권장\n\n- 스튜디오 연장 -\n30분 단위로 유료 연장 가능 (다음 예약이 없을 경우)\n\n﻿- 문자&전화 상담 시간 -\n평일 11:00~19:00 (주말 및 공휴일 휴무)\n네이버 톡톡을 이용하시면 연중 무휴로 예약 가능합니다.\n\n- 예약 변경 및 취소 환불 -\n예약일 5일 전까지: 70%\n예약일 4일 전까지: 60%\n예약일 3일 전까지: 50%\n예약일 2일 전까지: 40%\n예약일 1일 전까지: 30%\n예약일 당일 변경 및 취소: 0%\n(취소 및 변경 시 예약금 전액 환불 불가)\n\n공정거래위원회 지침 의거. \n\n- 문의 사항이 있거나 변경이 필요하면 언제든지 연락주세요-",
@@ -680,7 +711,6 @@
         let savedConfigs = ['default'];
         let optionCounts = {};
         let activeTab = 'products';
-        let dragOptionIndex = null;
 
         // 초기화
         document.addEventListener('DOMContentLoaded', function() {
@@ -764,116 +794,177 @@
             updateTablesInModal();
         }
 
-        // 상품명 그룹 탭 UI 추가
-        // 상품명 form-group 부분을 아래로 교체
-        let productGroupState = '뮤 패키지'; // 기본값
+        // 1. 상품 그룹 구조 추가 및 자동 분류 함수
+        function autoGroupProducts(products) {
+            const groupDefs = [
+                { name: "뮤 패키지", match: name => name.startsWith("뮤") },
+                { name: "축가", match: name => ["스페셜", "듀오", "프리미엄"].includes(name) },
+                { name: "녹음", match: name => name.includes("녹음") },
+                { name: "전문서비스", match: name => name === "가이드보컬 패키지" },
+            ];
+            const 기타 = [];
+            const groups = groupDefs.map(g => ({ name: g.name, items: [] }));
+            Object.keys(products).forEach(name => {
+                let found = false;
+                for (let i = 0; i < groupDefs.length; i++) {
+                    if (groupDefs[i].match(name)) {
+                        groups[i].items.push(name);
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) 기타.push(name);
+            });
+            groups.push({ name: "기타", items: 기타 });
+            return groups;
+        }
 
         function updateProductSelect() {
-            const select = document.getElementById('productType');
-            const tabContainer = document.getElementById('productGroupTabs');
-            select.innerHTML = '<option value="">선택하세요</option>';
-
-            // 그룹 분류
-            const groups = {
-                '뮤 패키지': [],
-                '축가 패키지': [],
-                '녹음': [],
-                '전문녹음패키지': [],
-                '기타': []
-            };
-            for (const [name, price] of Object.entries(currentSettings.products)) {
-                if (name.match(/^뮤[AB][하기프]프?패키지/)) {
-                    groups['뮤 패키지'].push([name, price]);
-                } else if (["듀오", "스페셜", "프리미엄"].includes(name)) {
-                    groups['축가 패키지'].push([name, price]);
-                } else if (["일반녹음", "노래녹음", "성우녹음", "악기녹음"].includes(name)) {
-                    groups['녹음'].push([name, price]);
-                } else if (name === "가이드보컬 패키지") {
-                    groups['전문녹음패키지'].push([name, price]);
-                } else {
-                    groups['기타'].push([name, price]);
-                }
-            }
-            // 탭 UI 생성
-            tabContainer.innerHTML = '';
-            Object.keys(groups).forEach(group => {
-                const tabBtn = document.createElement('button');
-                tabBtn.textContent = group;
-                tabBtn.className = 'btn' + (productGroupState === group ? ' btn-primary' : ' btn-settings');
-                tabBtn.style.fontSize = '13px';
-                tabBtn.onclick = function() {
-                    productGroupState = group;
-                    updateProductSelect();
+            // products가 비어있으면 기본값 복구
+            if (!currentSettings.products || Object.keys(currentSettings.products).length === 0) {
+                currentSettings.products = {
+                    "뮤B하프패키지": 99000,
+                    "뮤B기본패키지": 119000,
+                    "뮤B프로패키지": 180000,
+                    "뮤A하프패키지": 119000,
+                    "뮤A기본패키지": 149000,
+                    "뮤A프로패키지": 210000,
+                    "가이드보컬 패키지": 160000,
+                    "일반녹음": 45000,
+                    "듀오": 195000,
+                    "스페셜": 295000,
+                    "프리미엄": 390000
                 };
-                tabContainer.appendChild(tabBtn);
-            });
-            // 선택된 그룹만 드롭다운에 표시
-            for (const [name, price] of groups[productGroupState]) {
-                select.innerHTML += `<option value="${name}">${name}</option>`;
             }
+            const btnContainer = document.getElementById('productGroupButtons');
+            const selContainer = document.getElementById('productGroupSelects');
+            btnContainer.innerHTML = '';
+            selContainer.innerHTML = '';
+            if (!Array.isArray(currentSettings.productGroups)) {
+                currentSettings.productGroups = autoGroupProducts(currentSettings.products);
+            }
+            let activeIdx = window._activeProductGroupIdx || 0;
+            const selected = document.getElementById('productType') ? document.getElementById('productType').value : '';
+            // 가로 정렬 스타일 적용
+            selContainer.style.display = 'flex';
+            selContainer.style.gap = '12px';
+            selContainer.style.flexWrap = 'wrap'; // 한 줄에 다 못 들어가면 자동 줄바꿈
+            currentSettings.productGroups.forEach((group, idx) => {
+                if (group.items.length === 0) return;
+                const groupWrap = document.createElement('div');
+                groupWrap.style.display = 'flex';
+                groupWrap.style.flexDirection = 'column';
+                groupWrap.style.alignItems = 'flex-start';
+                // 카드형 스타일 적용
+                const groupKey = group.name.replace(/ /g, '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+                groupWrap.className = 'group-card group-' + groupKey;
+                groupWrap.style.flex = '1 1 160px'; // 최소 160px, 유동적으로 늘어남
+                const label = document.createElement('label');
+                label.textContent = group.name;
+                label.style.fontWeight = 'bold';
+                label.style.marginBottom = '4px';
+                const select = document.createElement('select');
+                select.className = 'form-control';
+                select.style.minWidth = '120px';
+                select.style.maxWidth = '180px';
+                select.style.width = '100%';
+                select.innerHTML = '<option value="">선택하세요</option>';
+                group.items.forEach(name => {
+                    if (currentSettings.products[name] !== undefined) {
+                        const option = document.createElement('option');
+                        option.value = name;
+                        option.textContent = name;
+                        option.selected = (name === selected);
+                        select.appendChild(option);
+                    }
+                });
+                select.onchange = function() {
+                    document.querySelectorAll('#productGroupSelects select').forEach((sel, sidx) => {
+                        if (sidx !== idx) sel.value = '';
+                    });
+                    let hidden = document.getElementById('productType');
+                    if (!hidden) {
+                        hidden = document.createElement('input');
+                        hidden.type = 'hidden';
+                        hidden.id = 'productType';
+                        document.body.appendChild(hidden);
+                    }
+                    hidden.value = select.value;
+                    updatePrice();
+                };
+                groupWrap.appendChild(label);
+                groupWrap.appendChild(select);
+                selContainer.appendChild(groupWrap);
+            });
         }
 
         function updateOptionButtons() {
+            // 버튼 데이터 호환 및 방어 코드
+            if (!Array.isArray(currentSettings.buttons)) {
+                currentSettings.buttons = Object.entries(currentSettings.buttons || {}).map(([name, amount]) => ({ name, amount }));
+            }
+            // 버튼 데이터가 없으면 기본값 복구
+            if (!currentSettings.buttons || currentSettings.buttons.length === 0) {
+                currentSettings.buttons = [
+                    { name: "녹음 30분 연장", amount: 22500 },
+                    { name: "촬영 30분 연장", amount: 60000 },
+                    { name: "광속믹스", amount: 30000 },
+                    { name: "급제작", amount: 50000 },
+                    { name: "얼굴보정", amount: 20000 },
+                    { name: "축가 얼굴보정", amount: 50000 },
+                    { name: "유료썸네일", amount: 5000 },
+                    { name: "축가 인원추가", amount: 30000 },
+                    { name: "보컬 레슨", amount: 50000 },
+                    { name: "MR제작", amount: 20000 },
+                    { name: "리허설 가이드", amount: 30000 },
+                    { name: "쇼츠&릴스", amount: 20000 },
+                    { name: "인원추가", amount: 20000 }
+                ];
+            }
             const container = document.getElementById('optionButtons');
             container.innerHTML = '';
-
-            const buttonEntries = Object.entries(currentSettings.buttons);
-
-            buttonEntries.forEach(([name, amount], idx) => {
+            currentSettings.buttons.forEach((btn, idx) => {
                 const button = document.createElement('div');
                 button.className = 'option-btn';
-                button.setAttribute('draggable', 'true');
-                button.dataset.idx = idx;
-                button.onclick = function() { addFee(amount, name); };
-
-                // 드래그 이벤트
-                button.addEventListener('dragstart', function(e) {
-                    dragOptionIndex = idx;
+                button.draggable = true;
+                button.ondragstart = (e) => {
+                    e.dataTransfer.setData('text/plain', idx);
                     button.classList.add('dragging');
-                    e.dataTransfer.effectAllowed = 'move';
-                });
-                button.addEventListener('dragend', function() {
-                    dragOptionIndex = null;
+                };
+                button.ondragend = () => {
                     button.classList.remove('dragging');
-                });
-                button.addEventListener('dragover', function(e) {
+                };
+                button.ondragover = (e) => {
                     e.preventDefault();
                     button.classList.add('drag-over');
-                });
-                button.addEventListener('dragleave', function() {
+                };
+                button.ondragleave = () => {
                     button.classList.remove('drag-over');
-                });
-                button.addEventListener('drop', function(e) {
+                };
+                button.ondrop = (e) => {
                     e.preventDefault();
                     button.classList.remove('drag-over');
-                    if (dragOptionIndex === null || dragOptionIndex === idx) return;
-                    reorderOptionButtons(dragOptionIndex, idx);
-                });
-
+                    const fromIdx = parseInt(e.dataTransfer.getData('text/plain'));
+                    const toIdx = idx;
+                    if (fromIdx !== toIdx) {
+                        const moved = currentSettings.buttons.splice(fromIdx, 1)[0];
+                        currentSettings.buttons.splice(toIdx, 0, moved);
+                        updateOptionButtons();
+                        updateTablesInModal();
+                        saveCurrentConfig(false); // 자동저장, 알림X
+                    }
+                };
+                button.onclick = function() { addFee(btn.amount, btn.name); };
                 const nameDiv = document.createElement('div');
                 nameDiv.className = 'name';
-                nameDiv.textContent = name;
-
+                nameDiv.textContent = btn.name;
                 const priceDiv = document.createElement('div');
                 priceDiv.className = 'price';
-                priceDiv.textContent = '₩' + amount.toLocaleString();
-
+                priceDiv.textContent = '₩' + btn.amount.toLocaleString();
                 button.appendChild(nameDiv);
                 button.appendChild(priceDiv);
                 container.appendChild(button);
             });
-        }
-
-        function reorderOptionButtons(fromIdx, toIdx) {
-            const entries = Object.entries(currentSettings.buttons);
-            const moved = entries.splice(fromIdx, 1)[0];
-            entries.splice(toIdx, 0, moved);
-            const newButtons = {};
-            entries.forEach(([k, v]) => { newButtons[k] = v; });
-            currentSettings.buttons = newButtons;
-            updateOptionButtons();
-            if (typeof updateTablesInModal === 'function') updateTablesInModal();
-            saveCurrentConfig();
         }
 
         function updateLocationButtons() {
@@ -899,54 +990,28 @@
         function updatePrice() {
             const productType = document.getElementById('productType').value;
             const amountField = document.getElementById('amount');
-            const startTime = document.getElementById('startTime').value;
-            const endTime = document.getElementById('endTime').value;
-            
-            if (productType && currentSettings.products[productType]) {
-                let price = currentSettings.products[productType];
-                
-                // 녹음 관련 상품 시간 계산
-                if (productType.includes('녹음')) {
-                    const [startHour, startMinute] = startTime.split(':').map(Number);
-                    let [endHour, endMinute] = endTime.split(':').map(Number);
-                    
-                    // 자정 처리
-                    if (endHour === 0) endHour = 24;
-                    
-                    // 시간 차이 계산 (분 단위)
-                    const totalMinutes = (endHour * 60 + endMinute) - (startHour * 60 + startMinute);
-                    const hours = totalMinutes / 60;
-                    
-                    // 기본 시간당 45,000원
-                    price = 45000 * hours;
-                }
-                
-                amountField.value = Math.round(price).toLocaleString();
+            // 녹음 그룹 상품인지 확인
+            let isNogum = false;
+            if (Array.isArray(currentSettings.productGroups)) {
+                const nogumGroup = currentSettings.productGroups.find(g => g.name.includes('녹음'));
+                if (nogumGroup && nogumGroup.items.includes(productType)) isNogum = true;
+            }
+            if (isNogum) {
+                amountField.value = '45000';
+            } else if (productType && currentSettings.products[productType]) {
+                const price = currentSettings.products[productType];
+                amountField.value = price.toLocaleString();
             } else {
                 amountField.value = '0';
             }
-            
             optionCounts = {};
-            updateTotalAmount();
-        }
-
-        function updateTotalAmount() {
-            const amount = parseInt(document.getElementById('amount').value.replace(/,/g, '')) || 0;
-            const discount = parseInt(document.getElementById('discount').value.replace(/,/g, '')) || 0;
-            const totalAmount = amount - discount;
-            
-            document.getElementById('totalAmount').value = totalAmount.toLocaleString();
-            
-            // 할인 금액 콤마 포맷팅
-            const discountField = document.getElementById('discount');
-            const formattedDiscount = parseInt(discountField.value.replace(/,/g, '')) || 0;
-            discountField.value = formattedDiscount.toLocaleString();
         }
 
         function updatePeople() {
             const people = parseInt(document.getElementById('people').value.replace('인', ''));
+            const addBtn = currentSettings.buttons.find(b => b.name === '인원추가');
+            const additionalFee = addBtn ? addBtn.amount : 0;
             if (people > 2) {
-                const additionalFee = currentSettings.buttons['인원추가'] || 0;
                 const currentAmount = parseInt(document.getElementById('amount').value.replace(/,/g, '')) || 0;
                 const additionalTotal = (people - 2) * additionalFee;
                 document.getElementById('amount').value = (currentAmount + additionalTotal).toLocaleString();
@@ -985,18 +1050,27 @@
                 alert(`${location}의 템플릿이 존재하지 않습니다.`);
                 return;
             }
-
             const date = new Date(document.getElementById('date').value);
             const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
             const weekday = weekdays[date.getDay()];
-            
             const options = Object.entries(optionCounts)
                 .filter(([option, count]) => count > 0 && !option.startsWith('추가옵션'))
                 .map(([option, count]) => `${option}[${count}]`);
             const optionsText = options.length > 0 ? options.join(', ') : '없음';
-            
             const amount = parseInt(document.getElementById('amount').value.replace(/,/g, '')) || 0;
-            
+            const discount = parseInt(document.getElementById('discountAmount').value.replace(/,/g, '')) || 0;
+            let finalAmount = amount;
+            // 템플릿에 {금액} 뒤에 '원'이 이미 있는지 감지
+            let 금액치환값 = amount.toLocaleString();
+            const 금액원중복 = template.includes('{금액} 원') || template.includes('{금액}원');
+            if (!금액원중복) {
+                금액치환값 += '원';
+            }
+            let discountText = '';
+            if (discount > 0) {
+                finalAmount = amount - discount;
+                discountText = `\n할인: ${discount.toLocaleString()}원 / 최종 결제: ${finalAmount.toLocaleString()}원`;
+            }
             const text = template
                 .replace('{상품명}', document.getElementById('productType').value)
                 .replace('{예약자}', document.getElementById('customerName').value)
@@ -1007,9 +1081,9 @@
                 .replace('{요일}', weekday)
                 .replace('{시작시간}', document.getElementById('startTime').value)
                 .replace('{종료시간}', document.getElementById('endTime').value)
-                .replace('{금액}', amount.toLocaleString())
+                .replace('{금액}', 금액치환값 + discountText)
                 .replace('{옵션}', optionsText);
-            
+            // 결과 텍스트에서 '입금 후 예약 확정' 앞에 항상 한 줄 공백 추가 (삭제)
             document.getElementById('resultText').value = text;
         }
 
@@ -1031,12 +1105,11 @@
         }
 
         // 설정 관리
-        function saveCurrentConfig() {
+        function saveCurrentConfig(showAlert = true) {
             const configData = {
                 settings: currentSettings,
                 timestamp: new Date().toISOString()
             };
-            
             if (isLocalStorageSupported()) {
                 localStorage.setItem(`reservationConfig_${currentConfigName}`, JSON.stringify(configData));
                 const currentList = JSON.parse(localStorage.getItem('reservationConfigsList') || '["default"]');
@@ -1045,9 +1118,9 @@
                     localStorage.setItem('reservationConfigsList', JSON.stringify(currentList));
                     savedConfigs = currentList;
                 }
-                alert(`설정이 "${currentConfigName}"으로 저장되었습니다.`);
+                if (showAlert) alert(`설정이 "${currentConfigName}"으로 저장되었습니다.`);
             } else {
-                alert(`설정이 "${currentConfigName}"으로 저장되었습니다.\n(브라우저가 localStorage를 지원하지 않아 임시 저장됩니다)`);
+                if (showAlert) alert(`설정이 "${currentConfigName}"으로 저장되었습니다.\n(브라우저가 localStorage를 지원하지 않아 임시 저장됩니다)`);
             }
         }
 
@@ -1058,31 +1131,20 @@
             }
         }
 
-        function resetForm() {
-            if (confirm('모든 입력 내용을 초기화하시겠습니까?')) {
-                document.getElementById('productType').value = '';
-                document.getElementById('customerName').value = '';
-                document.getElementById('people').value = '1인';
-                document.getElementById('songTitle').value = '';
-                document.getElementById('background').value = '해당없음';
-                document.getElementById('date').value = new Date().toISOString().split('T')[0];
-                document.getElementById('startTime').value = '10:00';
-                document.getElementById('endTime').value = '11:00';
-                document.getElementById('amount').value = '0';
-                document.getElementById('discount').value = '0';
-                document.getElementById('totalAmount').value = '0';
-                document.getElementById('resultText').value = '';
-                optionCounts = {};
-            }
-        }
-
-        function loadConfig(name, showAlert = false) {  // showAlert 기본값을 false로 변경
+        function loadConfig(name, showAlert = true) {
             if (isLocalStorageSupported()) {
                 const savedData = localStorage.getItem(`reservationConfig_${name}`);
                 if (savedData) {
                     try {
                         const configData = JSON.parse(savedData);
                         currentSettings = configData.settings || defaultSettings;
+                        if (!Array.isArray(currentSettings.buttons)) {
+                            currentSettings.buttons = Object.entries(currentSettings.buttons).map(([name, amount]) => ({ name, amount }));
+                        }
+                        // 상품 그룹 자동 생성
+                        if (!Array.isArray(currentSettings.productGroups)) {
+                            currentSettings.productGroups = autoGroupProducts(currentSettings.products);
+                        }
                     } catch (e) {
                         console.error('설정 파일 파싱 오류:', e);
                         currentSettings = JSON.parse(JSON.stringify(defaultSettings));
@@ -1098,7 +1160,16 @@
             document.getElementById('currentConfigName').textContent = name;
             
             // 폼 초기화
-            document.getElementById('productType').value = '';
+            let hidden = document.getElementById('productType');
+            if (!hidden) {
+                hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.id = 'productType';
+                document.body.appendChild(hidden);
+            }
+            hidden.value = '';
+            const selects = document.querySelectorAll('#productGroupSelects select');
+            selects.forEach(sel => sel.value = '');
             document.getElementById('customerName').value = '';
             document.getElementById('people').value = '1인';
             document.getElementById('songTitle').value = '';
@@ -1107,14 +1178,12 @@
             document.getElementById('startTime').value = '10:00';
             document.getElementById('endTime').value = '11:00';
             document.getElementById('amount').value = '0';
-            document.getElementById('discount').value = '0';
-            document.getElementById('totalAmount').value = '0';
             document.getElementById('resultText').value = '';
             optionCounts = {};
             
             updateAllUI();
             
-            // showAlert가 true일 때만 알림 표시 (기본값이 false로 변경됨)
+            // showAlert가 true일 때만 알림 표시
             if (showAlert) {
                 alert(`설정 "${name}"을(를) 불러왔습니다.`);
             }
@@ -1218,9 +1287,25 @@
                 try {
                     const configData = JSON.parse(e.target.result);
                     currentSettings = configData.settings || defaultSettings;
+                    if (!Array.isArray(currentSettings.buttons)) {
+                        currentSettings.buttons = Object.entries(currentSettings.buttons).map(([name, amount]) => ({ name, amount }));
+                    }
+                    // 상품 그룹 자동 생성
+                    if (!Array.isArray(currentSettings.productGroups)) {
+                        currentSettings.productGroups = autoGroupProducts(currentSettings.products);
+                    }
                     
                     // 폼 초기화
-                    document.getElementById('productType').value = '';
+                    let hidden = document.getElementById('productType');
+                    if (!hidden) {
+                        hidden = document.createElement('input');
+                        hidden.type = 'hidden';
+                        hidden.id = 'productType';
+                        document.body.appendChild(hidden);
+                    }
+                    hidden.value = '';
+                    const selects = document.querySelectorAll('#productGroupSelects select');
+                    selects.forEach(sel => sel.value = '');
                     document.getElementById('customerName').value = '';
                     document.getElementById('people').value = '1인';
                     document.getElementById('songTitle').value = '';
@@ -1277,14 +1362,104 @@
         }
 
         function switchTab(tabName) {
-            // 모든 탭 비활성화
             document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
-            
-            // 선택된 탭 활성화
             event.target.classList.add('active');
             document.getElementById(tabName + 'Tab').classList.remove('hidden');
             activeTab = tabName;
+            if(tabName === 'groups') updateGroupsTab();
+        }
+
+        function updateGroupsTab() {
+            // 그룹 선택 드롭박스
+            const groupSelect = document.getElementById('groupSelect');
+            groupSelect.innerHTML = '';
+            if (!Array.isArray(currentSettings.productGroups)) currentSettings.productGroups = autoGroupProducts(currentSettings.products);
+            currentSettings.productGroups.forEach((g, i) => {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = g.name;
+                groupSelect.appendChild(opt);
+            });
+            loadGroup();
+        }
+
+        function loadGroup() {
+            const idx = parseInt(document.getElementById('groupSelect').value) || 0;
+            const group = currentSettings.productGroups[idx];
+            const area = document.getElementById('groupEditArea');
+            area.innerHTML = '';
+            // 그룹명 변경
+            const nameRow = document.createElement('div');
+            nameRow.style.marginBottom = '8px';
+            nameRow.innerHTML = `<label>그룹명 변경</label> <input type='text' id='editGroupName' value='${group.name}' class='form-control' style='width: 160px; display: inline-block;'> <button class='btn btn-primary' onclick='renameGroup(${idx})'>변경</button>`;
+            area.appendChild(nameRow);
+            // 상품 리스트
+            const list = document.createElement('ul');
+            list.style.listStyle = 'none';
+            list.style.padding = '0';
+            group.items.forEach((item, i) => {
+                const li = document.createElement('li');
+                li.style.display = 'flex';
+                li.style.alignItems = 'center';
+                li.style.marginBottom = '4px';
+                li.innerHTML = `<span style='flex:1;'>${item}</span> <button class='btn btn-red' style='padding:2px 8px;font-size:12px;' onclick='removeGroupItem(${idx},${i})'>삭제</button>`;
+                list.appendChild(li);
+            });
+            area.appendChild(list);
+            // 상품 추가
+            const addRow = document.createElement('div');
+            addRow.style.marginTop = '8px';
+            addRow.innerHTML = `<input type='text' id='addGroupItemName' class='form-control' placeholder='상품명' style='width: 160px; display: inline-block;'> <button class='btn btn-green' onclick='addGroupItem(${idx})'>상품 추가</button>`;
+            area.appendChild(addRow);
+        }
+
+        function addGroup() {
+            const name = document.getElementById('newGroupName').value.trim();
+            if (!name) return alert('그룹명을 입력하세요.');
+            if (currentSettings.productGroups.some(g => g.name === name)) return alert('이미 존재하는 그룹명입니다.');
+            currentSettings.productGroups.push({ name, items: [] });
+            document.getElementById('newGroupName').value = '';
+            updateGroupsTab();
+            currentConfigName = 'default';
+            saveCurrentConfig(false);
+        }
+
+        function deleteGroup() {
+            const idx = parseInt(document.getElementById('groupSelect').value) || 0;
+            if (currentSettings.productGroups.length <= 1) return alert('최소 1개 그룹은 남겨야 합니다.');
+            if (!confirm('정말 삭제하시겠습니까?')) return;
+            currentSettings.productGroups.splice(idx, 1);
+            updateGroupsTab();
+            saveCurrentConfig(false);
+        }
+
+        function renameGroup(idx) {
+            const newName = document.getElementById('editGroupName').value.trim();
+            if (!newName) return alert('그룹명을 입력하세요.');
+            if (currentSettings.productGroups.some((g, i) => g.name === newName && i !== idx)) return alert('이미 존재하는 그룹명입니다.');
+            currentSettings.productGroups[idx].name = newName;
+            updateGroupsTab();
+            saveCurrentConfig(false);
+        }
+
+        function addGroupItem(idx) {
+            const name = document.getElementById('addGroupItemName').value.trim();
+            if (!name) return alert('상품명을 입력하세요.');
+            if (currentSettings.productGroups[idx].items.includes(name)) return alert('이미 존재하는 상품입니다.');
+            currentSettings.productGroups[idx].items.push(name);
+            // products에도 추가(기본값 0)
+            if (!currentSettings.products[name]) currentSettings.products[name] = 0;
+            updateGroupsTab();
+            currentConfigName = 'default';
+            saveCurrentConfig(false);
+        }
+
+        function removeGroupItem(idx, i) {
+            const name = currentSettings.productGroups[idx].items[i];
+            currentSettings.productGroups[idx].items.splice(i, 1);
+            updateGroupsTab();
+            saveCurrentConfig(false);
         }
 
         // 상품 관리
@@ -1298,7 +1473,8 @@
                 document.getElementById('newProductPrice').value = '';
                 updateProductSelect();
                 updateTablesInModal();
-                alert('상품이 추가/수정되었습니다.');
+                currentConfigName = 'default';
+                saveCurrentConfig(false);
             } else {
                 alert('올바른 상품명과 가격을 입력하세요.');
             }
@@ -1324,16 +1500,22 @@
             const amount = parseInt(document.getElementById('newButtonAmount').value.replace(/,/g, ''));
             
             if (name && amount >= 0) {
-                if (Object.keys(currentSettings.buttons).length >= 15 && !currentSettings.buttons[name]) {
-                    alert('버튼은 최대 15개까지 추가할 수 있습니다.');
-                    return;
+                const idx = currentSettings.buttons.findIndex(b => b.name === name);
+                if (idx !== -1) {
+                    currentSettings.buttons[idx].amount = amount;
+                } else {
+                    if (currentSettings.buttons.length >= 15) {
+                        alert('버튼은 최대 15개까지 추가할 수 있습니다.');
+                        return;
+                    }
+                    currentSettings.buttons.push({ name, amount });
                 }
-                currentSettings.buttons[name] = amount;
                 document.getElementById('newButtonName').value = '';
                 document.getElementById('newButtonAmount').value = '';
                 updateOptionButtons();
                 updateTablesInModal();
-                alert('옵션이 추가/수정되었습니다.');
+                currentConfigName = 'default';
+                saveCurrentConfig(false);
             } else {
                 alert('올바른 옵션명과 금액을 입력하세요.');
             }
@@ -1346,11 +1528,14 @@
 
         function deleteButton(name) {
             if (confirm(`${name}을(를) 삭제하시겠습니까?`)) {
-                delete currentSettings.buttons[name];
-                delete optionCounts[name];
-                updateOptionButtons();
-                updateTablesInModal();
-                alert('옵션이 삭제되었습니다.');
+                const idx = currentSettings.buttons.findIndex(b => b.name === name);
+                if (idx !== -1) {
+                    currentSettings.buttons.splice(idx, 1);
+                    delete optionCounts[name];
+                    updateOptionButtons();
+                    updateTablesInModal();
+                    saveCurrentConfig(false); // 자동저장, 알림X
+                }
             }
         }
 
@@ -1401,6 +1586,8 @@
             const selectedLocation = document.getElementById('locationSelect').value;
             if (selectedLocation) {
                 currentSettings.templates[selectedLocation] = document.getElementById('templateText').value;
+                currentConfigName = 'default';
+                saveCurrentConfig(false);
                 alert('템플릿이 저장되었습니다.');
             }
         }
@@ -1459,38 +1646,30 @@
         function updateButtonsTable() {
             const tbody = document.getElementById('buttonsTable');
             tbody.innerHTML = '';
-            
-            for (const [name, amount] of Object.entries(currentSettings.buttons)) {
+            currentSettings.buttons.forEach(btn => {
                 const row = document.createElement('tr');
-                
                 const nameCell = document.createElement('td');
-                nameCell.textContent = name;
+                nameCell.textContent = btn.name;
                 row.appendChild(nameCell);
-                
                 const amountCell = document.createElement('td');
                 amountCell.style.textAlign = 'right';
-                amountCell.textContent = amount.toLocaleString();
+                amountCell.textContent = btn.amount.toLocaleString();
                 row.appendChild(amountCell);
-                
                 const actionCell = document.createElement('td');
                 actionCell.style.textAlign = 'center';
-                
                 const editBtn = document.createElement('button');
                 editBtn.textContent = '✏️';
                 editBtn.style.cssText = 'color: #3b82f6; border: none; background: none; cursor: pointer; margin-right: 8px;';
-                editBtn.onclick = function() { editButton(name, amount); };
-                
+                editBtn.onclick = function() { editButton(btn.name, btn.amount); };
                 const deleteBtn = document.createElement('button');
                 deleteBtn.textContent = '🗑️';
                 deleteBtn.style.cssText = 'color: #ef4444; border: none; background: none; cursor: pointer;';
-                deleteBtn.onclick = function() { deleteButton(name); };
-                
+                deleteBtn.onclick = function() { deleteButton(btn.name); };
                 actionCell.appendChild(editBtn);
                 actionCell.appendChild(deleteBtn);
                 row.appendChild(actionCell);
-                
                 tbody.appendChild(row);
-            }
+            });
         }
 
         function escapeHtml(text) {
@@ -1501,166 +1680,6 @@
 
         function escapeQuotes(text) {
             return text.replace(/'/g, "\\'").replace(/"/g, '\\"');
-        }
-
-        // 그룹별 상품 리스트 뼈대 렌더링 함수 (드래그&드롭 이동만 우선 구현)
-        function renderProductGroupLists() {
-            const container = document.getElementById('productGroupLists');
-            container.innerHTML = '';
-            const groups = Object.keys(currentSettings.productGroups);
-            groups.forEach((group, groupIdx) => {
-                const groupDiv = document.createElement('div');
-                groupDiv.className = 'group-card';
-                groupDiv.setAttribute('draggable', 'true');
-                groupDiv.ondragstart = e => { dragGroup = group; };
-                groupDiv.ondragend = e => { dragGroup = null; };
-                groupDiv.ondragover = e => { e.preventDefault(); groupDiv.classList.add('drag-over'); };
-                groupDiv.ondragleave = e => { groupDiv.classList.remove('drag-over'); };
-                groupDiv.ondrop = e => {
-                    groupDiv.classList.remove('drag-over');
-                    if (dragGroup && dragGroup !== group) {
-                        const arr = Object.entries(currentSettings.productGroups);
-                        const fromIdx = arr.findIndex(([g]) => g === dragGroup);
-                        const toIdx = arr.findIndex(([g]) => g === group);
-                        const moved = arr.splice(fromIdx, 1)[0];
-                        arr.splice(toIdx, 0, moved);
-                        const newGroups = {};
-                        arr.forEach(([g, v]) => newGroups[g] = v);
-                        currentSettings.productGroups = newGroups;
-                        renderProductGroupLists();
-                        updateProductSelect();
-                        saveCurrentConfig();
-                    }
-                };
-                // 그룹 헤더
-                const groupHeader = document.createElement('div');
-                groupHeader.className = 'group-header';
-                const groupNameSpan = document.createElement('span');
-                groupNameSpan.textContent = group;
-                groupHeader.appendChild(groupNameSpan);
-                const groupBtnBox = document.createElement('span');
-                groupBtnBox.className = 'group-btns';
-                // 이름변경
-                const renameBtn = document.createElement('button');
-                renameBtn.textContent = '✏️';
-                renameBtn.className = 'btn btn-settings';
-                renameBtn.onclick = function() {
-                    document.getElementById('newGroupName').value = group;
-                    renameProductGroup();
-                };
-                groupBtnBox.appendChild(renameBtn);
-                // 삭제
-                if (group !== '기타') {
-                    const delBtn = document.createElement('button');
-                    delBtn.textContent = '🗑️';
-                    delBtn.className = 'btn btn-red';
-                    delBtn.onclick = function() {
-                        document.getElementById('newGroupName').value = group;
-                        deleteProductGroup();
-                    };
-                    groupBtnBox.appendChild(delBtn);
-                }
-                groupHeader.appendChild(groupBtnBox);
-                groupDiv.appendChild(groupHeader);
-                // 상품 리스트
-                const ul = document.createElement('ul');
-                ul.className = 'product-list';
-                ul.ondragover = e => { e.preventDefault(); ul.classList.add('drag-over'); };
-                ul.ondragleave = e => { ul.classList.remove('drag-over'); };
-                ul.ondrop = e => {
-                    ul.classList.remove('drag-over');
-                    if (dragProduct && dragFromGroup && dragFromGroup !== group) {
-                        const idx = currentSettings.productGroups[dragFromGroup].indexOf(dragProduct);
-                        if (idx > -1) currentSettings.productGroups[dragFromGroup].splice(idx, 1);
-                        currentSettings.productGroups[group].push(dragProduct);
-                        dragProduct = null; dragFromGroup = null;
-                        renderProductGroupLists();
-                        updateProductSelect();
-                        saveCurrentConfig();
-                    }
-                };
-                currentSettings.productGroups[group].forEach(productName => {
-                    const li = document.createElement('li');
-                    li.className = 'product-item';
-                    li.setAttribute('draggable', 'true');
-                    li.ondragstart = e => { dragProduct = productName; dragFromGroup = group; };
-                    li.ondragend = e => { dragProduct = null; dragFromGroup = null; };
-                    // 상품명
-                    const nameSpan = document.createElement('span');
-                    nameSpan.textContent = productName;
-                    nameSpan.style.flex = '1';
-                    li.appendChild(nameSpan);
-                    // 수정/삭제 버튼
-                    const btnBox = document.createElement('span');
-                    // 수정
-                    const editBtn = document.createElement('button');
-                    editBtn.textContent = '✏️';
-                    editBtn.className = 'btn btn-settings';
-                    editBtn.onclick = function() {
-                        document.getElementById('newProductName').value = productName;
-                        document.getElementById('newProductPrice').value = currentSettings.products[productName] || '';
-                    };
-                    btnBox.appendChild(editBtn);
-                    // 삭제
-                    const delBtn = document.createElement('button');
-                    delBtn.textContent = '🗑️';
-                    delBtn.className = 'btn btn-red';
-                    delBtn.onclick = function() {
-                        if (confirm(`${productName}을(를) 삭제하시겠습니까?`)) {
-                            delete currentSettings.products[productName];
-                            const idx = currentSettings.productGroups[group].indexOf(productName);
-                            if (idx > -1) currentSettings.productGroups[group].splice(idx, 1);
-                            renderProductGroupLists();
-                            updateProductSelect();
-                            saveCurrentConfig();
-                        }
-                    };
-                    btnBox.appendChild(delBtn);
-                    li.appendChild(btnBox);
-                    ul.appendChild(li);
-                });
-                groupDiv.appendChild(ul);
-                container.appendChild(groupDiv);
-            });
-        }
-
-        // productsTab 진입 시 renderProductGroupLists() 호출 필요
-        // ... 기존 코드 ...
-
-        // 그룹 추가
-        function addProductGroup() {
-            const name = document.getElementById('newGroupName').value.trim();
-            if (!name) { alert('그룹명을 입력하세요.'); return; }
-            if (currentSettings.productGroups[name]) { alert('이미 존재하는 그룹명입니다.'); return; }
-            currentSettings.productGroups[name] = [];
-            renderProductGroupLists();
-            updateProductSelect();
-            saveCurrentConfig();
-        }
-        // 그룹 삭제
-        function deleteProductGroup() {
-            const name = document.getElementById('newGroupName').value.trim();
-            if (!name || !currentSettings.productGroups[name]) { alert('삭제할 그룹명을 정확히 입력하세요.'); return; }
-            if (name === '기타') { alert('기타 그룹은 삭제할 수 없습니다.'); return; }
-            // 상품은 기타로 이동
-            currentSettings.productGroups['기타'] = currentSettings.productGroups['기타'].concat(currentSettings.productGroups[name]);
-            delete currentSettings.productGroups[name];
-            renderProductGroupLists();
-            updateProductSelect();
-            saveCurrentConfig();
-        }
-        // 그룹 이름 변경
-        function renameProductGroup() {
-            const name = document.getElementById('newGroupName').value.trim();
-            if (!name || !currentSettings.productGroups[name]) { alert('변경할 그룹명을 정확히 입력하세요.'); return; }
-            const newName = prompt('새 그룹명을 입력하세요:', name);
-            if (!newName || newName === name) return;
-            if (currentSettings.productGroups[newName]) { alert('이미 존재하는 그룹명입니다.'); return; }
-            currentSettings.productGroups[newName] = currentSettings.productGroups[name];
-            delete currentSettings.productGroups[name];
-            renderProductGroupLists();
-            updateProductSelect();
-            saveCurrentConfig();
         }
     </script>
 </body>
